@@ -2,6 +2,7 @@ import torch
 from model import LinearQNet, QTrainer
 from connect4 import Game
 import random
+from collections import deque
 
 
 MAX_MEMORY = 100_00
@@ -50,15 +51,19 @@ class Agent:
     
 
   def get_action(self, state):
-    self.epsilon = 80 - self.no_games
+    self.epsilon = 80 - self.num_games
     
     if random.randint(0,200) < self.epsilon:
       move = random.randint(0,6)
     else:
-      # predict a move
+      initial_state = torch.tensor(state,
+                                   dtype=torch.float)
+      pred = self.model(initial_state)
+      idx = torch.argmax(pred).item()
+      move = idx
     return move
 
-  def train():
+def train():
     scores = []
     agent = Agent()
     player1 = Game(1)
@@ -121,3 +126,7 @@ class Agent:
 
       # Switch turns
       turn = 3 - turn
+
+
+if __name__ == "__main__":
+  train()

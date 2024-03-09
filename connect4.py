@@ -7,6 +7,7 @@ SQUARE_SIZE=100
 width = COLUMN_COUNT * SQUARE_SIZE
 height = (ROW_COUNT+1)*SQUARE_SIZE
 SPEED = 40
+size=(height, width)
 
 
 class Game:
@@ -76,9 +77,10 @@ class Game:
       return self.board[ROW_COUNT-1][move] == 0
     
   def get_valid_row(self, action):
-    for r in range(ROW_COUNT):
-  		if self.board[r][action] == 0:
-			  return r
+      for r in range(ROW_COUNT):
+          if self.board[r][action] == 0:
+              return r
+
     
   def drop_piece(self, row, col, player):
     self.board[row][col] = player
