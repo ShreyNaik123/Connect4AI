@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 import torch.nn.functional as F
+import numpy as np
 import os
 
 
@@ -15,11 +16,12 @@ class LinearQNet(nn.Module):
         self.linear2 = nn.Linear(hidden_size, output_size)
 
     def forward(self, x):
-        # Flatten the input tensor
-        x = x.view(x.size(0), -1)
-        x = F.relu(self.linear1(x))
-        x = self.linear2(x)
-        return x
+      # Flatten the input tensor
+      x = torch.tensor(np.array(x).flatten())
+      # x = x.view(x.size(0), -1)
+      x = F.relu(self.linear1(x))
+      x = self.linear2(x)
+      return x
 
   # def save
   
@@ -38,10 +40,30 @@ class QTrainer:
     next_state = torch.tensor(next_state, dtype=torch.float)
     action = torch.tensor(action, dtype=torch.float)
     reward = torch.tensor(reward, dtype=torch.float)
-    
-    
+  
     pred = self.model(state)
     target = pred.clone()
+    
+    # print(f"""
+    #   \n
+    #   ---------------------------
+    #   state = {state}
+    #   len = {len(state.shape)}
+    #   next_state = {next_state}
+    #   action={action}
+    #   reward = {reward}
+    #   done = {done}
+    #   target = {target}
+    #   --------------------\n
+    #   """)
+    
+    if len(state.shape) == 1:
+            state = torch.unsqueeze(state, 0)
+            next_state = torch.unsqueeze(next_state, 0)
+            action = torch.unsqueeze(action, 0)
+            reward = torch.unsqueeze(reward, 0)
+            done = (done,)
+    
     
     for idx in range(len(done)):
       
@@ -49,7 +71,9 @@ class QTrainer:
       if not done[idx]:
         Q_new = reward[idx] + self.gamma* torch.max(self.model(next_state[idx]))
       
-      target[idx][torch.argmax(action[idx]).item()] = Q_new
+      # target[idx][torch.argmax(action[idx]).item()] =Q_new
+      target[torch.argmax(action[idx]).item()] = Q_new.item()
+
     
     loss = self.loss(target, pred)
     self.optimizer.zero_grad()
