@@ -9,20 +9,17 @@ import os
 class LinearQNet(nn.Module):
     def __init__(self, input_size, hidden_size, output_size):
         super(LinearQNet, self).__init__()
-        # Calculate the total input size (6 * 7)
-        total_input_size = input_size[0] * input_size[1]
+        # Calculate the total input size 42
         
-        self.linear1 = nn.Linear(total_input_size, hidden_size)
+        self.linear1 = nn.Linear(input_size, hidden_size)
         self.linear2 = nn.Linear(hidden_size, output_size)
 
     def forward(self, x):
-      # Flatten the input tensor
-      x = torch.tensor(np.array(x).flatten())
-      # x = x.view(x.size(0), -1)
+      # x = x.view(42) 
+      x = x.view(-1, 42)
       x = F.relu(self.linear1(x))
       x = self.linear2(x)
       return x
-
   # def save
   
 
@@ -36,23 +33,28 @@ class QTrainer:
     self.loss = nn.MSELoss()
   
   def train_step(self, state, action, reward, next_state, done):
+    # print(f"\n STATE before = {state}\n")
     state = torch.tensor(state, dtype=torch.float)
     next_state = torch.tensor(next_state, dtype=torch.float)
     action = torch.tensor(action, dtype=torch.float)
     reward = torch.tensor(reward, dtype=torch.float)
-  
+    
+    # state = state.view(-1,42)
+    # next_state = next_state.view(-1,42)
+    
     pred = self.model(state)
     target = pred.clone()
     
     # print(f"""
     #   \n
     #   ---------------------------
-    #   state = {state}
-    #   len = {len(state.shape)}
-    #   next_state = {next_state}
-    #   action={action}
-    #   reward = {reward}
-    #   done = {done}
+    #   # state = {state}
+    #   # state shape = {state.shape}
+    #   # len = {len(state.shape)}
+    #   # next_state = {next_state.shape}
+    #   # action={action.shape}
+    #   # reward = {reward.shape}
+    #   # done = {done}
     #   target = {target}
     #   --------------------\n
     #   """)
@@ -71,8 +73,10 @@ class QTrainer:
       if not done[idx]:
         Q_new = reward[idx] + self.gamma* torch.max(self.model(next_state[idx]))
       
-      # target[idx][torch.argmax(action[idx]).item()] =Q_new
-      target[torch.argmax(action[idx]).item()] = Q_new.item()
+      target[idx][torch.argmax(action[idx]).item()] =Q_new
+      # target[torch.argmax(action[idx]).item()] = Q_new.item()
+      # target = target.reshape(-1, 1)  
+      # target[torch.argmax(action[idx]).item()] = Q_new.item()
 
     
     loss = self.loss(target, pred)

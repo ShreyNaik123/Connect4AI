@@ -1,5 +1,6 @@
 import numpy as np
 import pygame
+import time
 
 ROW_COUNT = 6
 COLUMN_COUNT = 7
@@ -45,7 +46,7 @@ class Game:
         pygame.quit()
         quit()
         
-    reward = 2
+    reward = 1
     game_over = False
     redo = False
     draw = False
@@ -54,6 +55,7 @@ class Game:
     if not self.is_valid_move(action):
       reward = -10
       redo = True
+      done = True
       return reward,game_over,self.score,redo,draw
       
     self.prev_state = self.board
@@ -74,7 +76,9 @@ class Game:
       return reward, game_over, self.score, redo, draw
 
     if self.win(player):
+      game_over = True
       reward = 10
+      self.draw_board()
       self.reset()
       
     self.clock.tick(SPEED)
@@ -96,6 +100,7 @@ class Game:
     
   def drop_piece(self, row, col, player):
     self.board[row][col] = player
+    self.draw_board()
   
   def _move(self, action, player):
       row = self.get_valid_row(action)
@@ -107,24 +112,28 @@ class Game:
     for c in range(COLUMN_COUNT-3):
       for r in range(ROW_COUNT):
         if board[r][c] == player and board[r][c+1] == player and board[r][c+2] == player and board[r][c+3] == player:
+          # board[r][c] = board[r][c+1] = board[r][c+2] = board[r][c+3] = 3
           return True
 
     # Check vertical locations for win
     for c in range(COLUMN_COUNT):
       for r in range(ROW_COUNT-3):
         if board[r][c] == player and board[r+1][c] == player and board[r+2][c] == player and board[r+3][c] == player:
+          # board[r][c] = board[r+1][c] = board[r+2][c] = board[r+3][c] = 3
           return True
 
     # Check positively sloped diaganols
     for c in range(COLUMN_COUNT-3):
       for r in range(ROW_COUNT-3):
         if board[r][c] == player and board[r+1][c+1] == player and board[r+2][c+2] == player and board[r+3][c+3] == player:
+          # board[r][c] = board[r+1][c+1] = board[r+2][c+2] = board[r+3][c+3] = 3
           return True
 
     # Check negatively sloped diaganols
     for c in range(COLUMN_COUNT-3):
       for r in range(3, ROW_COUNT):
         if board[r][c] == player and board[r-1][c+1] == player and board[r-2][c+2] == player and board[r-3][c+3] == player:
+          # board[r][c] = board[r-1][c-1] = board[r-2][c-2] = board[r-3][c-3] = 3
           return True
     
     return False
