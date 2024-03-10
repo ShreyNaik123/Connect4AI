@@ -36,7 +36,8 @@ class Agent:
     if len(self.memory) > BATCH_SIZE:
       random_sample = random.sample(self.memory,
                                      BATCH_SIZE)
-    random_sample = self.memory
+    else:
+      random_sample = self.memory
 
     states, action, reward, next_states, done = zip(*random_sample)
     states =  [np.array(state).flatten() for state in states]
@@ -59,13 +60,15 @@ class Agent:
     self.epsilon = max(initial_epsilon * (0.995 ** self.num_games), 0.1)
 
     if random.uniform(0, 1) < self.epsilon:
-      
+
         move = random.randint(0, 6)
+        print(f"Random Move {move}")
     else:
         initial_state = torch.tensor(state, dtype=torch.float)
         pred = self.model(initial_state)
         idx = torch.argmax(pred).item()
         move = idx
+        print(f"Predicted Move {move}")
 
 
     return move
@@ -79,11 +82,8 @@ def train():
     turn = 1
     rewards = []
 
+
     pygame.init()
-
-    # RADIUS = int(SQUARESIZE/2 - 5)
-
-    # screen = pygame.display.set_mode(size)
     game.draw_board()
     pygame.display.update()
 
@@ -111,23 +111,25 @@ def train():
           # if redo % 200 == 0  and redo != 0:
           #   player1.train_long()
 
-          if done:
+          if done or redo:
             game.num_games += 1
-            print("done 1")
-            if draw:
-              print("DRAW1")
+            if not redo:
             # the very prev move that p2 made that resulted in p1 making a move that led to p1's victory
-            p2_reward = -10
-            p2_old_state = player2.prev_state
-            p2_action = player2.prev_move
-            p2_new_state = old_state
-            player2.remember(p2_old_state, p2_action, p2_reward, p2_new_state, done)
+              p2_reward = -10
+              p2_old_state = player2.prev_state
+              p2_action = player2.prev_move
+              p2_new_state = old_state
+              player2.remember(p2_old_state, p2_action, p2_reward, p2_new_state, done)
+            print(game.count_consecutive_pieces(1))
+            print(player1.get_state(game))
+            break
             # remember for p2's loss
             game.reset()
             player1.num_games += 1
             if not redo:
               game.player1_wins += 1
             player1.train_long()
+            player2.train_long()
 
       else:
           # Player 2 goes
@@ -149,28 +151,26 @@ def train():
           player2.remember(old_state, move, reward, new_state, done)
           # if redo % 200 == 0 and redo != 0:
           #   player2.train_long()
-          if done:
+          if done or redo:
             game.num_games += 1
-            print("done2")
-            if draw:
-              print("draw2")
+            if not redo:
             # the very prev move that p1 made that resulted in p2 making a move that led to p2's victory
-            p1_reward = -10
-            p1_old_state = player2.prev_state
-            p1_action = player1.prev_move
-            p1_new_state = old_state
-            player1.remember(p1_old_state, p1_action, p1_reward, p1_new_state, done)
+              p1_reward = -10
+              p1_old_state = player2.prev_state
+              p1_action = player1.prev_move
+              p1_new_state = old_state
+              player1.remember(p1_old_state, p1_action, p1_reward, p1_new_state, done)
             # remember for p1's loss
             game.reset()
             player2.num_games += 1
             if not redo:
               game.player2_wins += 1
             player2.train_long()
+            player1.train_long()
 
       # Switch turns
       rewards.append(reward)
       game.draw_board()
-      print(reward)
       reward_plot(rewards)
       
       turn = 3 - turn

@@ -38,6 +38,25 @@ class Game:
     self.score = 0
     self.frame_iteration = 0
   
+  
+  def count_consecutive_pieces(self, player):
+    # Count consecutive pieces in each direction (horizontal, vertical, diagonal) for both players
+    consecutive_counts = np.zeros((6, 7, 4), dtype=int)
+
+    for r in range(6):
+        for c in range(7):
+            if self.board[r][c] == player:
+                # Horizontal
+                consecutive_counts[r, c, 0] = 1 if c == 0 or self.board[r][c - 1] != player else consecutive_counts[r, c - 1, 0] + 1
+                # Vertical
+                consecutive_counts[r, c, 1] = 1 if r == 0 or self.board[r - 1][c] != player else consecutive_counts[r - 1, c, 1] + 1
+                # Diagonal /
+                consecutive_counts[r, c, 2] = 1 if r == 0 or c == 6 or self.board[r - 1][c + 1] != player else consecutive_counts[r - 1, c + 1, 2] + 1
+                # Diagonal \
+                consecutive_counts[r, c, 3] = 1 if r == 0 or c == 0 or self.board[r - 1][c - 1] != player else consecutive_counts[r - 1, c - 1, 3] + 1
+
+    return consecutive_counts
+  
   def play_step(self, action, player):
     self.frame_iteration += 1
 
@@ -46,14 +65,14 @@ class Game:
         pygame.quit()
         quit()
         
-    reward = 1
+    reward = 0
     game_over = False
     redo = False
     draw = False
     
     # check if the action is valid -> the column has place to put a new piece
     if not self.is_valid_move(action):
-      reward = -10
+      reward = -5
       redo = True
       done = True
       return reward,game_over,self.score,redo,draw
